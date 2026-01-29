@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 from numpy.ma.core import empty
 
-path = "task_images/1.png"
+path = "task_images/7.png"
 
 def stackImages(scale,imgArray):
     rows = len(imgArray)

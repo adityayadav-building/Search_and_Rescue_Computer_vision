@@ -61,7 +61,7 @@ def get_color_info(h, s, v):
     if (h < 10 or h > 165):
         return "Red", 3 # Severe Status
 
-    elif 115 < h < 145:
+    elif ( h > 125 ):
         return "Pink", 0  # Pink Camp
 
     # YELLOW (Mild)
@@ -320,10 +320,10 @@ def segment_terrain(image_path):
             # Storing this distance inside the person's dictionary
             person['distances'][c_name] = int(dist)
 
-        # Print for Debugging
-        print(f"Person {person['id']} ({person['type']}) P:{person['priority']} Distances -> {person['distances']}")
+        # Printing for Debugging
+        print(f"Person {person['id']} ({person['type']}) P:{person['priority']} Distances = {person['distances']}")
 
-    # Drawing Lines to the nearest camps
+    '''
     for person in casualties:
         # Find the name of the closest camp just for visualization
         if person['distances']:
@@ -336,15 +336,74 @@ def segment_terrain(image_path):
                     end_pt = camp['center']
                     # Drawing a thin grey line to show we calculated it
                     cv2.line(imgContour, start_pt, end_pt, (150, 150, 150), 2)
+                    
+    '''
+    camp_capacities = {
+        'Pink': 3,
+        'Blue': 4,
+        'Grey': 2
+    }
+
+    casualties.sort(key=lambda x: x['priority'], reverse=True)
+
+    assigned_count = 0
+    total_priority_rescued = 0
+
+    for person in casualties:
+        sorted_distances = sorted(person['distances'].items(), key=lambda x: x[1])
+
+        person_assigned = False
+
+        # This way we try to assign to the nearest camp first
+        for camp_color, dist in sorted_distances:
+
+            # Checking if this camp has space
+            if camp_capacities.get(camp_color, 0) > 0:
+                # ASSIGN IT TO THEM
+                person['assigned_to'] = camp_color
+                camp_capacities[camp_color] -= 1  # Decrease capacity
+                person_assigned = True
+
+                # Update metrics
+                assigned_count += 1
+                total_priority_rescued += person['priority']
+
+                print(
+                    f"Success: Person {person['id']} ({person['type']}, P:{person['priority']}) = Assigned to {camp_color} Camp (Dist: {dist})")
+
+                # Visuals: Draw line to the ASSIGNED camp
+                target_camp = None
+                for c in camps:
+                    if c['color'] == camp_color:
+                        target_camp = c
+                cv2.line(imgContour, person['center'], target_camp['center'], (0, 255, 0), 2)
+
+                break  # To stop checking other camps for this person
+
+        if not person_assigned:
+            print(f"Failure: Person {person['id']} could not be assigned (All camps are full)")
+            person['assigned_to'] = "None"
 
 
-    imgBlank = np.zeros_like(img)
+    num_casualties = len(casualties)
+    if num_casualties > 0:
+        rescue_ratio = total_priority_rescued / num_casualties
+    else:
+        rescue_ratio = 0
+
+    print(f"\n     FINAL METRICS     ")
+    print(f"Total Priority Rescued: {total_priority_rescued}")
+    print(f"Rescue Ratio (Pr): {rescue_ratio:.2f}")
+
+
     imgStack = stackImages(0.8, ([img, imgGray, blurred],
                                  [imgCanny, imgContour, imgDial]))
+    cv2.imshow("Final Rescue Plan", imgStack)
 
-    cv2.imshow("Shape detection", imgStack)
 
-    cv2.waitKey(0)
+
+    #imgBlank = np.zeros_like(img)
+
 
     '''
     cv2.imshow('Original', img)
@@ -356,7 +415,7 @@ def segment_terrain(image_path):
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
-segment_terrain('task_images/1.png')
+segment_terrain('task_images/9.png')
 
 
 
