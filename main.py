@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 import math
-
+import os
 print("package ok")
 
 def stackImages(scale,imgArray):
@@ -146,7 +146,7 @@ def segment_terrain(image_path):
 
         for cnt in contours:
             area = cv2.contourArea(cnt)
-            print(area)
+            #print(area)
 
             # # Area Filter: Ignore tiny noise (<100) and huge terrain boundaries
             if 100 < area < 1550:
@@ -159,7 +159,7 @@ def segment_terrain(image_path):
                 # Higher epsilon (0.05) ignores jagged pixel edges (noise).
                 epsilon = 0.05 * peri
                 approx = cv2.approxPolyDP(cnt, epsilon, True)
-                print(len(approx))
+                #print(len(approx))
 
                 objCor = len(approx)
 
@@ -212,7 +212,7 @@ def segment_terrain(image_path):
                 peri = cv2.arcLength(cnt, True)
                 epsilon = 0.05 * peri
                 approx = cv2.approxPolyDP(cnt, epsilon, True)
-                print(len(approx))
+                #print(len(approx))
 
                 objCor = len(approx)
 
@@ -304,6 +304,9 @@ def segment_terrain(image_path):
     imgDial = cv2.dilate(imgCanny, kernel, iterations=1)
     getContours(imgDial)
 
+
+    print("     IMAGE ANALYSIS    ", )
+
     print(f" Found {len(camps)} Camps and {len(casualties)} Casualties")
 
     for person in casualties:
@@ -384,6 +387,19 @@ def segment_terrain(image_path):
             print(f"Failure: Person {person['id']} could not be assigned (All camps are full)")
             person['assigned_to'] = "None"
 
+    camp_counts = {"Blue": 0, "Pink": 0, "Grey": 0}
+
+    for person in casualties:
+        # Only count if they were actually assigned (not "None")
+        assigned_camp = person.get('assigned_to')
+        if assigned_camp in camp_counts:
+            camp_counts[assigned_camp] += 1
+
+    print("\n--- CASUALTY COUNTS ---")
+    print(f"Blue Camp: {camp_counts['Blue']}")
+    print(f"Pink Camp: {camp_counts['Pink']}")
+    print(f"Grey Camp: {camp_counts['Grey']}")
+
 
     num_casualties = len(casualties)
     if num_casualties > 0:
@@ -391,7 +407,6 @@ def segment_terrain(image_path):
     else:
         rescue_ratio = 0
 
-    print(f"\n     FINAL METRICS     ")
     print(f"Total Priority Rescued: {total_priority_rescued}")
     print(f"Rescue Ratio (Pr): {rescue_ratio:.2f}")
 
@@ -399,7 +414,6 @@ def segment_terrain(image_path):
     imgStack = stackImages(0.8, ([img, imgGray, blurred],
                                  [imgCanny, imgContour, imgDial]))
     cv2.imshow("Final Rescue Plan", imgStack)
-
 
 
     #imgBlank = np.zeros_like(img)
@@ -411,11 +425,46 @@ def segment_terrain(image_path):
     cv2.imshow('Land Mask', mask_land)
     cv2.imshow('Segmented Overlay', final_output)'''
 
-    print("Press any key to close windows...")
-    cv2.waitKey(0)
+    #print("Press any key to close windows...")
+    cv2.waitKey(500)
     cv2.destroyAllWindows()
+    return rescue_ratio
 
-segment_terrain('task_images/9.png')
+#segment_terrain('task_images/9.png')
+
+if __name__ == "__main__":
+
+    results = []
+
+    # Loop through images 1 to 10
+    for i in range(1, 11):
+        file_path = f"task_images/{i}.png"
+
+        # checking if the file exists
+        if os.path.exists(file_path):
+            print(f"\nProcessing {file_path}...")
+
+            # Getting the Priority ratio and running our operations on the image
+            ratio = segment_terrain(file_path)
+
+            # Append to results list: (Filename, Score)
+            results.append((f"{i}.png", ratio))
+        else:
+            print(f"Warning: {file_path} not found.")
+
+
+    # Sorting the results based on Rescue Ratio (Descending Order)
+    # x[1] is the ratio. reverse=True means Highest to Lowest.
+    results.sort(key=lambda x: x[1], reverse=True)
+
+    print("\n\n")
+    print("       FINAL SORTED RESCUE LIST       \n\n")
+    print(f"{'Image Name':<15} | {'Rescue Ratio (Pr)':<15}")
+    print("-" * 35)
+
+    for name, score in results:
+        print(f"{name} | {score:.2f}")
+
 
 
 
