@@ -307,7 +307,7 @@ def segment_terrain(image_path):
 
     print("     IMAGE ANALYSIS    ", )
 
-    print(f" Found {len(camps)} Camps and {len(casualties)} Casualties")
+    print(" Found", len(camps), "Camps and", len(casualties), "Casualties")
 
     for person in casualties:
         p_center = person['center']
@@ -324,7 +324,7 @@ def segment_terrain(image_path):
             person['distances'][c_name] = int(dist)
 
         # Printing for Debugging
-        print(f"Person {person['id']} ({person['type']}) P:{person['priority']} Distances = {person['distances']}")
+        print("Person", person['id'], "(", person['type'], ") P:", person['priority'], "Distances =", person['distances'])
 
     '''
     for person in casualties:
@@ -371,8 +371,7 @@ def segment_terrain(image_path):
                 assigned_count += 1
                 total_priority_rescued += person['priority']
 
-                print(
-                    f"Success: Person {person['id']} ({person['type']}, P:{person['priority']}) = Assigned to {camp_color} Camp (Dist: {dist})")
+                print("Success: Person", person['id'], "(", person['type'], ", P:", person['priority'], ") = Assigned to", camp_color, "Camp (Dist:", dist, ")")
 
                 # Visuals: Draw line to the ASSIGNED camp
                 target_camp = None
@@ -384,7 +383,7 @@ def segment_terrain(image_path):
                 break  # To stop checking other camps for this person
 
         if not person_assigned:
-            print(f"Failure: Person {person['id']} could not be assigned (All camps are full)")
+            print("Failure: Person", person['id'], "could not be assigned (All camps are full)")
             person['assigned_to'] = "None"
 
     camp_counts = {"Blue": 0, "Pink": 0, "Grey": 0}
@@ -396,9 +395,9 @@ def segment_terrain(image_path):
             camp_counts[assigned_camp] += 1
 
     print("\n--- CASUALTY COUNTS ---")
-    print(f"Blue Camp: {camp_counts['Blue']}")
-    print(f"Pink Camp: {camp_counts['Pink']}")
-    print(f"Grey Camp: {camp_counts['Grey']}")
+    print("Blue Camp:", camp_counts['Blue'])
+    print("Pink Camp:", camp_counts['Pink'])
+    print("Grey Camp:", camp_counts['Grey'])
 
 
     num_casualties = len(casualties)
@@ -407,8 +406,8 @@ def segment_terrain(image_path):
     else:
         rescue_ratio = 0
 
-    print(f"Total Priority Rescued: {total_priority_rescued}")
-    print(f"Rescue Ratio (Pr): {rescue_ratio:.2f}")
+    print("Total Priority Rescued:", total_priority_rescued)
+    print("Rescue Ratio (Pr):", rescue_ratio)
 
 
     imgStack = stackImages(0.8, ([img, imgGray, blurred],
@@ -442,7 +441,7 @@ if __name__ == "__main__":
 
         # checking if the file exists
         if os.path.exists(file_path):
-            print(f"\nProcessing {file_path}...")
+            print("\nProcessing", file_path, "...")
 
             # Getting the Priority ratio and running our operations on the image
             ratio = segment_terrain(file_path)
@@ -450,7 +449,7 @@ if __name__ == "__main__":
             # Append to results list: (Filename, Score)
             results.append((f"{i}.png", ratio))
         else:
-            print(f"Warning: {file_path} not found.")
+            print("Warning:", file_path, "not found.")
 
 
     # Sorting the results based on Rescue Ratio (Descending Order)
@@ -458,13 +457,12 @@ if __name__ == "__main__":
     results.sort(key=lambda x: x[1], reverse=True)
 
     print("\n\n")
-    print("       FINAL SORTED RESCUE LIST       \n\n")
-    print(f"{'Image Name':<15} | {'Rescue Ratio (Pr)':<15}")
+    print("        FINAL SORTED RESCUE LIST       \n\n")
+    print("Image Name      | Rescue Ratio (Pr)")
     print("-" * 35)
 
     for name, score in results:
-        print(f"{name} | {score:.2f}")
-
+        print(name, "|", score)
 
 
 
